@@ -1,0 +1,32 @@
+{
+  "name": "@arcana/arcana",
+  "version": "0.2.24",
+  "type": "module",
+  "bin": {
+    "arcana": "./bin/arcana"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cli/cmd/*": "./src/cli/cmd/*.ts"
+  },
+  "dependencies": {
+    "@arcana/memory": "workspace:*",
+    "@arcana/cron": "workspace:*",
+    "@arcana/gateway": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "ai": "catalog:",
+    "@ai-sdk/openai": "catalog:",
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/google": "catalog:",
+    "@ai-sdk/openai-compatible": "catalog:",
+    "yargs": "17.7.2",
+    "gray-matter": "catalog:"
+  },
+  "devDependencies": {
+    "@types/yargs": "17.0.33",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}
