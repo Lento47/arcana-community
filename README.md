@@ -47,14 +47,7 @@ cd packages/arcana && bun link
 arcana
 ```
 
-> **Windows users:** `bun install` on Windows may fail to extract the `dist/` directory from the `ai` package. If you see `Cannot find package 'ai'`, run this fix:
-> ```sh
-> npm pack ai@6.0.168 --pack-destination $env:TEMP\ai-fix
-> cd node_modules\ai
-> tar -xzf $env:TEMP\ai-fix\ai-6.0.168.tgz --strip-components=2 package/dist
-> cd ..\..
-> ```
-> This is a [known bun issue](https://github.com/oven-sh/bun/issues) with tarball extraction on Windows. Linux/macOS are unaffected.
+> **Windows users:** a `postinstall` script automatically fixes a [known bun issue](https://github.com/oven-sh/bun/issues) with `ai` package extraction. No manual steps needed — just run `bun install`.
 
 ## Quick start
 
