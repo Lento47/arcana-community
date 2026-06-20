@@ -1,41 +1,46 @@
-// Bun on Windows fails to create the node_modules/ai symlink
-// AND fails to extract dist/ from the tarball. Two bugs, one fix:
-// 1. Copy the full ai package from .bun cache to node_modules/ai
-// 2. Overlay pre-extracted dist from vendor/
-const { existsSync, cpSync, rmSync, readdirSync, mkdirSync } = require("fs")
+// Bun on Windows fails to extract dist/ from ai@6.0.168 and may fail
+// to symlink the package from .bun cache. Fix all ai package instances.
+const { existsSync, cpSync, readdirSync, mkdirSync, rmSync } = require("fs")
 const { join } = require("path")
 
 const root = join(__dirname, "..")
-const nmDir = join(root, "node_modules")
-const aiLink = join(nmDir, "ai")
 const vendorDist = join(root, "vendor", "dist")
-const distIndex = join(aiLink, "dist", "index.js")
 
-if (existsSync(distIndex)) process.exit(0)
+if (!existsSync(vendorDist)) process.exit(0)
 
-// Find ai in .bun cache
-const bunCache = join(nmDir, ".bun")
-let aiCache = null
-for (const entry of readdirSync(bunCache)) {
-  if (entry.startsWith("ai@")) {
-    const p = join(bunCache, entry, "node_modules", "ai")
-    if (existsSync(join(p, "package.json"))) { aiCache = p; break }
+// Find all ai packages across the monorepo (root + workspace node_modules)
+const aiDirs = []
+function findAiDirs(base) {
+  if (!existsSync(base)) return
+  for (const entry of readdirSync(base)) {
+    if (entry === "ai") {
+      const p = join(base, entry)
+      if (existsSync(join(p, "package.json"))) aiDirs.push(p)
+    }
   }
 }
-
-if (!aiCache) process.exit(0)
-
-console.log("[arcana] fixing ai package (bun Windows workaround)...")
-
-// Copy the full package from bun cache
-try { rmSync(aiLink, { recursive: true, force: true }) } catch {}
-mkdirSync(aiLink, { recursive: true })
-cpSync(aiCache, aiLink, { recursive: true, force: true })
-
-// Overlay dist from vendor
-if (existsSync(vendorDist)) {
-  mkdirSync(join(aiLink, "dist"), { recursive: true })
-  cpSync(vendorDist, join(aiLink, "dist"), { recursive: true, force: true })
+findAiDirs(join(root, "node_modules"))
+for (const pkg of readdirSync(join(root, "packages"))) {
+  findAiDirs(join(root, "packages", pkg, "node_modules"))
 }
 
-console.log("[arcana] ai package fixed")
+// Also find in .bun cache and add to fix list
+const bunCache = join(root, "node_modules", ".bun")
+for (const entry of readdirSync(bunCache)) {
+  if (!entry.startsWith("ai@")) continue
+  const p = join(bunCache, entry, "node_modules", "ai")
+  if (existsSync(join(p, "package.json")) && !aiDirs.includes(p)) aiDirs.push(p)
+}
+
+let fixed = 0
+for (const aiDir of aiDirs) {
+  const distIndex = join(aiDir, "dist", "index.js")
+  if (existsSync(distIndex)) continue
+  try {
+    mkdirSync(join(aiDir, "dist"), { recursive: true })
+    cpSync(vendorDist, join(aiDir, "dist"), { recursive: true, force: true })
+    fixed++
+  } catch {}
+}
+
+if (fixed > 0) console.log(`[arcana] fixed ai package in ${fixed} location(s)`)
