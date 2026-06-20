@@ -1,9 +1,9 @@
-# ⛧ arcana
+# ⛧ arcana-community
 
-**Self-improving AI agent CLI** — skills, memory, gateway, coding, and cron in one terminal.
+**Self-improving AI agent CLI** — community edition. Skills, memory, gateway, coding, and cron in one terminal. Open-source, MIT-licensed, no monetization.
 
-[![npm](https://img.shields.io/npm/v/arcana-ai?label=npm)](https://www.npmjs.com/package/arcana-ai)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![version](https://img.shields.io/badge/version-0.2.25-purple)](https://github.com/Lento47/arcana-community/releases)
 
 ```sh
 arcana doctor            # check system health
@@ -18,20 +18,16 @@ arcana learn list        # view accumulated knowledge
 ## Install
 
 ```sh
-# Quick start (shim downloads binary on first run)
-npx arcana-ai
-
-# Or global install
-npm install -g arcana-ai
-arcana
-
-# From source (dev)
-git clone https://github.com/Lento47/arcana && cd arcana
+# From source (recommended)
+git clone https://github.com/Lento47/arcana-community && cd arcana-community
 bun install
 bun link                 # from packages/arcana/ — creates global `arcana` bin
+
+# Or run directly
+bun packages/arcana/src/index.ts
 ```
 
-Single binary distribution; source build requires Node.js/Bun dependencies.
+Requires [Bun](https://bun.sh) >= 1.3.14. Single binary distribution via GitHub Releases.
 
 ## Quick start
 
@@ -110,8 +106,6 @@ arcana cron remove <job-id>
 
 ## Deep Dive
 
-Undocumented features that are ready to use:
-
 ### `arcana memory` — FTS5-powered session memory
 
 Search past session conversations, extracted facts, artifacts, and skill observations:
@@ -124,7 +118,6 @@ arcana memory stats
 
 ### `arcana history` — browse and resume past sessions
 
-List, inspect, and resume previous agent sessions:
 ```sh
 arcana history list
 arcana history show --id <session-id>
@@ -133,7 +126,6 @@ arcana history resume --id <session-id>
 
 ### `arcana learn` — self-improving knowledge pipeline
 
-After sessions with 2+ turns, the agent extracts learnings into wiki files and a map of consciousness:
 ```sh
 arcana learn list
 arcana learn show --slug kebab-case-slug
@@ -142,51 +134,28 @@ arcana learn moc       # show map of consciousness
 
 ### `arcana doctor` — system health diagnostics
 
-Check config, API keys, cache files, and runtime environment:
 ```sh
 arcana doctor
 ```
 
 ### Gateway — Telegram, Discord, Slack, and WhatsApp
 
-Four chat platform adapters with per-chat agent sessions. WhatsApp runs via Cloud API webhook (self-hosted HTTP server on port 3100):
+Four chat platform adapters with per-chat agent sessions:
 ```sh
 arcana gateway
 ```
 
-Configure in `~/.arcana/config.json` (see Gateway section below).
-
-### `@arcana/http-recorder` — VCR-style HTTP cassette testing
-
-Record and replay Effect HTTP client traffic with deterministic cassettes. Secret redaction, request matching, auto record/replay mode detection:
-```ts
-import { HttpRecorder } from "@arcana/http-recorder"
-```
-
-### `@arcana/function` — Cloudflare Worker with DurableObjects
-
-Share/sync server using Cloudflare DurableObjects, GitHub App JWT token exchange, R2 storage, and a Feishu-to-Discord bridge. Deployed via SST.
-
 ### Cron daemon — scheduled autonomous agents
 
-The cron scheduler runs as a persistent daemon, evaluating jobs every 60s. Jobs persist to a JSON store and integrate with memory:
 ```sh
 arcana cron add "daily-review" --schedule "0 9 * * *" --prompt "review today's changes"
 arcana cron list
 arcana cron start     # run daemon (blocking)
 ```
 
-### Plugin lifecycle — 30+ hooks
-
-The plugin system defines hooks for agent, tool, config, auth, chat, permissions, and workspace lifecycle events. Types and examples in `@arcana/plugin`:
-```sh
-arcana skills list          # 174 available
-arcana skills search "git"  # search by keyword
-```
-
 ## Skills
 
-174 skills across categories: software-development, devops, security, data-science, blockchain, web-development, creative, productivity, and more.
+174 skills across categories: software-development, devops, security, data-science, blockchain, web-development, creative, productivity, research, and more.
 
 ```sh
 arcana skills list
@@ -215,7 +184,7 @@ Env overrides: `ARCANA_PROVIDER`, `ARCANA_MODEL`, `ARCANA_API_KEY`, `OPENAI_API_
 
 ```sh
 bun install
-bun run typecheck   # build status: restored for v0.2.6
+bun run typecheck
 bun run build
 bun run test
 ```
@@ -243,21 +212,38 @@ bun packages/arcana/src/index.ts run "hello"
 
 Themes: arcana (default), bloodmoon, coven, crypt, dragon, lich, wraith.
 
+## Differences from arcana (main)
+
+This community edition is the fully open-source, MIT-licensed version. The main [arcana](https://github.com/Lento47/arcana) repo includes additional features under a commercial license:
+
+| Feature | Community | Main |
+|---------|-----------|------|
+| TUI + CLI agent | ✓ | ✓ |
+| 174 skills | ✓ | ✓ |
+| Gateway (Telegram, Discord, Slack, WhatsApp) | ✓ | ✓ |
+| Cron scheduler | ✓ | ✓ |
+| Memory + FTS5 search | ✓ | ✓ |
+| Self-improving learn pipeline | ✓ | ✓ |
+| Multi-provider LLM routing (30+ providers) | ✓ | ✓ |
+| Enterprise dashboard | ✗ | ✓ |
+| Team/organization features | ✗ | ✓ |
+| Session sharing | ✗ | ✓ |
+| Proxy + pay-as-you-go billing | ✗ | ✓ |
+| Commercial license | ✗ | ✓ |
+
 ## Thanks
 
 Arcana builds on incredible open-source work:
 
-- **[OpenCode](https://github.com/anomalyco/opencode)** — the TUI engine (SolidJS + OpenTUI), provider system, tools, and CLI architecture. Arcana began as a fork and would not exist without it.
-- **[Hermes Agent](https://github.com/Lento47/hermes-agent)** — autonomous AI agent framework with sandboxing, memory, and multi-provider routing. Powers arcana's non-interactive agent mode.
+- **[OpenCode](https://github.com/anomalyco/opencode)** — the TUI engine (SolidJS + OpenTUI), provider system, tools, and CLI architecture.
+- **[Hermes Agent](https://github.com/Lento47/hermes-agent)** — autonomous AI agent framework with sandboxing, memory, and multi-provider routing.
 - **[models.dev](https://models.dev)** — community model catalog powering arcana's provider auto-discovery (200+ models across 33 providers).
 - **[Effect](https://effect.website)** — typed functional effect system for reliable concurrency, error handling, and dependency injection.
-- **[Bun](https://bun.sh)** — JavaScript runtime, bundler, and compiler. The zero-dependency standalone binary is produced by `Bun.build({ compile })`.
+- **[Bun](https://bun.sh)** — JavaScript runtime, bundler, and compiler.
 - **[SolidJS](https://solidjs.com)** + **[OpenTUI](https://github.com/opentui/core)** — reactive UI framework + terminal rendering engine.
 - **[AI SDK](https://sdk.vercel.ai)** — unified LLM provider interface (OpenAI, Anthropic, Google, Bedrock, and 30+ more).
 - 174 skills from the open-source community across 28 categories.
 
-All arcana modifications are MIT-licensed and upstreamable.
-
 ## License
 
-Dual-licensed under MIT (non-commercial) and Commercial. See [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
