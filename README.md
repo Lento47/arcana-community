@@ -47,7 +47,14 @@ cd packages/arcana && bun link
 arcana
 ```
 
-> **Windows users:** if `bun install` produces missing package errors at runtime (e.g. `Cannot find package 'ai'`), delete `bun.lock` and re-run `bun install`. This is a [known bun issue](https://github.com/oven-sh/bun/issues) with package catalog resolution on Windows.
+> **Windows users:** `bun install` on Windows may fail to extract the `dist/` directory from the `ai` package. If you see `Cannot find package 'ai'`, run this fix:
+> ```sh
+> npm pack ai@6.0.168 --pack-destination $env:TEMP\ai-fix
+> cd node_modules\ai
+> tar -xzf $env:TEMP\ai-fix\ai-6.0.168.tgz --strip-components=2 package/dist
+> cd ..\..
+> ```
+> This is a [known bun issue](https://github.com/oven-sh/bun/issues) with tarball extraction on Windows. Linux/macOS are unaffected.
 
 ## Quick start
 
