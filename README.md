@@ -17,17 +17,37 @@ arcana learn list        # view accumulated knowledge
 
 ## Install
 
-```sh
-# From source (recommended)
-git clone https://github.com/Lento47/arcana-community && cd arcana-community
-bun install
-bun link                 # from packages/arcana/ — creates global `arcana` bin
+### Option 1: Download binary (fastest)
 
-# Or run directly
-bun packages/arcana/src/index.ts
+Download the latest binary from [GitHub Releases](https://github.com/Lento47/arcana-community/releases/latest) for your platform:
+
+```sh
+# Windows (PowerShell)
+Invoke-WebRequest -Uri https://github.com/Lento47/arcana-community/releases/latest/download/arcana-win-x64.exe -OutFile arcana.exe
+.\arcana.exe
+
+# macOS / Linux
+curl -L https://github.com/Lento47/arcana-community/releases/latest/download/arcana-linux-x64 -o arcana
+chmod +x arcana
+./arcana
 ```
 
-Requires [Bun](https://bun.sh) >= 1.3.14. Single binary distribution via GitHub Releases.
+### Option 2: Build from source
+
+Requires [Bun](https://bun.sh) >= 1.3.14.
+
+```sh
+git clone https://github.com/Lento47/arcana-community.git
+cd arcana-community
+bun install
+bun packages/arcana/src/index.ts   # run directly
+
+# Or link as global command
+cd packages/arcana && bun link
+arcana
+```
+
+> **Windows users:** if `bun install` produces missing package errors at runtime (e.g. `Cannot find package 'ai'`), delete `bun.lock` and re-run `bun install`. This is a [known bun issue](https://github.com/oven-sh/bun/issues) with package catalog resolution on Windows.
 
 ## Quick start
 
