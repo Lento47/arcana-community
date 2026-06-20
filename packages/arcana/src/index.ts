@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 arcana contributors
-// Bare `arcana` → fast-path: spawn opencode TUI directly. Imports yargs + commands
+// Bare `arcana` → fast-path: spawn engine TUI directly. Imports yargs + commands
 // ONLY for subcommands, saving ~9s of bun JIT on the 90% TUI case.
 import path from "node:path"
 import { existsSync } from "node:fs"
@@ -14,19 +14,19 @@ const isArcanaSubcommand = firstArg && (SUBCOMMANDS.includes(firstArg) || HELP_F
 
 if (!isArcanaSubcommand) {
   // === TUI fast path ===
-  // Generate bridge config (providers + skills paths) for opencode
+  // Generate bridge config (providers + skills paths) for engine
   const { generateBridgeConfig } = await import("./skills/bridge.js")
   const arcanaConfig = process.env.ARCANA_CONFIG
     ? undefined
     : await generateBridgeConfig()
 
-  const opencodeDir = path.join(import.meta.dir, "../../opencode")
-  const opencodeEntry = path.join(opencodeDir, "src/index.ts")
+  const engineDir = path.join(import.meta.dir, "../../engine")
+  const engineEntry = path.join(engineDir, "src/index.ts")
 
   const child = Bun.spawn({
-    cmd: ["bun", "run", "--conditions=browser", opencodeEntry, ...args],
+    cmd: ["bun", "run", "--conditions=browser", engineEntry, ...args],
     stdio: ["inherit", "inherit", "inherit"],
-    cwd: opencodeDir,
+    cwd: engineDir,
     env: {
       ...process.env,
       PWD: process.cwd(),
