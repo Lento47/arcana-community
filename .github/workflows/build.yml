@@ -31,7 +31,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: "Lento47/arcana"
+          GH_REPO: "Lento47/arcana-community"
         run: gh release create ${{ github.ref_name }} --title "${{ github.ref_name }}" --notes "arcana binaries" || true
 
       - name: Build arcana binaries
@@ -39,7 +39,7 @@ jobs:
           OPENCODE_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') && '1' || '' }}
           OPENCODE_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '0.0.0' }}
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: "Lento47/arcana"
+          GH_REPO: "Lento47/arcana-community"
         run: bun run --cwd packages/engine script/build.ts --skip-embed-web-ui
 
       - name: Publish to npmjs.org
