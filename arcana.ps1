@@ -42,7 +42,6 @@ if (-not $isSubcommand) {
         }
 
         $config = @{
-            '$schema' = "https://raw.githubusercontent.com/Lento47/arcana/master/schema/config.json"
             skills = @{ paths = $skillsPaths }
         }
         if ($provider.Count -gt 0) { $config.provider = $provider }
@@ -55,6 +54,12 @@ if (-not $isSubcommand) {
     # Preserve the user's real project dir for the app (it reads $env:PWD, not bun's
     # cwd, to resolve the project root — see resolveThreadDirectory in cli/cmd/tui.ts).
     $env:PWD = (Get-Location).Path
+
+    # Auto-load proxy key from license activation
+    $proxyKeyFile = Join-Path $arcanaHome "proxy_key"
+    if (-not $env:ARCANA_PROXY_KEY -and (Test-Path $proxyKeyFile)) {
+      $env:ARCANA_PROXY_KEY = (Get-Content $proxyKeyFile -Raw).Trim()
+    }
 
     # Run bun with cwd=packages/engine so it resolves JSX transpile config from that
     # package's tsconfig ("jsxImportSource": "@opentui/solid") regardless of where the

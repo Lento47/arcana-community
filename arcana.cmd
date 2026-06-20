@@ -1,14 +1,14 @@
 @echo off
-REM Arcana launcher — zero-JIT startup. Checks args: TUI mode spawns the engine directly,
+REM Arcana launcher — zero-JIT startup. Checks args: TUI mode spawns opencode directly,
 REM subcommands (run, skills, cron, memory, gateway, completion) delegate to full CLI.
 setlocal enabledelayedexpansion
 
 set "ARCANA_HOME=%USERPROFILE%\.arcana"
-set "CONFIG=%ARCANA_HOME%\cache\arcana-config.json"
+set "CONFIG=%ARCANA_HOME%\cache\opencode-config.json"
 
 REM Generate bridge config once (nearly instant — 2 dir checks + 1 JSON file)
 if not exist "%CONFIG%" (
-    powershell -NoProfile -Command "mkdir '%ARCANA_HOME%\cache' -Force *>$null; $s=@(); if(Test-Path '%~dp0skills'){$s+='%~dp0skills'}; if(Test-Path '%ARCANA_HOME%\skills'){$s+='%ARCANA_HOME%\skills'}; @{'$schema'='https://raw.githubusercontent.com/Lento47/arcana/master/schema/config.json';'skills'=@{paths=$s}} | ConvertTo-Json -Depth 3 | Out-File '%CONFIG%' -Encoding utf8"
+    powershell -NoProfile -Command "mkdir '%ARCANA_HOME%\cache' -Force *>$null; $s=@(); if(Test-Path '%~dp0skills'){$s+='%~dp0skills'}; if(Test-Path '%ARCANA_HOME%\skills'){$s+='%ARCANA_HOME%\skills'}; @{'skills'=@{paths=$s}} | ConvertTo-Json -Depth 3 | Out-File '%CONFIG%' -Encoding utf8"
 )
 
 set "ARCANA_CONFIG=%CONFIG%"
@@ -27,7 +27,12 @@ if "%_arg1%"=="-v" goto :subcommand
 if "%_arg1%"=="--help" goto :subcommand
 if "%_arg1%"=="-h" goto :subcommand
 
-REM TUI mode — spawn engine directly
+REM Auto-load proxy key from license activation
+if not defined ARCANA_PROXY_KEY if exist "%USERPROFILE%\.arcana\proxy_key" (
+    set /p ARCANA_PROXY_KEY=<"%USERPROFILE%\.arcana\proxy_key"
+)
+
+REM TUI mode — spawn opencode directly
 bun run --conditions=browser "%~dp0packages\engine\src\index.ts" %*
 goto :end
 
