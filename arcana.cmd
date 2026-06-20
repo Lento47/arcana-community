@@ -1,10 +1,10 @@
 @echo off
-REM Arcana launcher — zero-JIT startup. Checks args: TUI mode spawns opencode directly,
+REM Arcana launcher — zero-JIT startup. Checks args: TUI mode spawns the engine directly,
 REM subcommands (run, skills, cron, memory, gateway, completion) delegate to full CLI.
 setlocal enabledelayedexpansion
 
 set "ARCANA_HOME=%USERPROFILE%\.arcana"
-set "CONFIG=%ARCANA_HOME%\cache\opencode-config.json"
+set "CONFIG=%ARCANA_HOME%\cache\arcana-config.json"
 
 REM Generate bridge config once (nearly instant — 2 dir checks + 1 JSON file)
 if not exist "%CONFIG%" (
@@ -27,8 +27,8 @@ if "%_arg1%"=="-v" goto :subcommand
 if "%_arg1%"=="--help" goto :subcommand
 if "%_arg1%"=="-h" goto :subcommand
 
-REM TUI mode — spawn opencode directly
-bun run --conditions=browser "%~dp0packages\opencode\src\index.ts" %*
+REM TUI mode — spawn engine directly
+bun run --conditions=browser "%~dp0packages\engine\src\index.ts" %*
 goto :end
 
 :subcommand

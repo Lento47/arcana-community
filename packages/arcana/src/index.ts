@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// SPDX-License-Identifier: MIT OR LicenseRef-arcana-Commercial
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 arcana contributors
 // Bare `arcana` → fast-path: spawn opencode TUI directly. Imports yargs + commands
 // ONLY for subcommands, saving ~9s of bun JIT on the 90% TUI case.
@@ -61,7 +61,7 @@ function show(out: string) {
   process.stderr.write(text + "\n")
 }
 
-const VERSION = "0.2.24"
+const VERSION = "0.2.25"
 
 // Lazy-load commands — each is only needed for its own subcommand
 async function loadCommands() {

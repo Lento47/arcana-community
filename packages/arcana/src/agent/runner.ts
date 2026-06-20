@@ -216,7 +216,7 @@ export class AgentRunner {
         if (allowedTools && !this.config.godlike) {
           const allowed = new Set(allowedTools.split(","))
           if (!allowed.has("*") && !allowed.has(tc.toolName)) {
-            resultStr = `[LICENSE] Tool "${tc.toolName}" is not available on your plan. Upgrade at https://arcana.otnelhq.com`
+            resultStr = `Tool "${tc.toolName}" is not in the allowed tools list. Set ARCANA_ALLOWED_TOOLS or the allowedTools config to enable it.`
             history.push({ role: "tool", tool_call_id: tc.toolCallId, content: resultStr, toolName: tc.toolName } as any)
             continue
           }

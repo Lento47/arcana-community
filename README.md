@@ -3,7 +3,7 @@
 **Self-improving AI agent CLI** — skills, memory, gateway, coding, and cron in one terminal.
 
 [![npm](https://img.shields.io/npm/v/arcana-ai?label=npm)](https://www.npmjs.com/package/arcana-ai)
-[![license](https://img.shields.io/badge/license-MIT%20%2B%20Commercial-blue)](LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ```sh
 arcana doctor            # check system health
@@ -95,7 +95,7 @@ arcana cron remove <job-id>
 |---------|-------------|
 | `@arcana/arcana` | CLI entry + agent runner |
 | `@arcana/core` | Effect-based agent runtime, tools, session, database |
-| `@arcana/opencode` | Forked OpenCode TUI (SolidJS + OpenTUI) |
+| `@arcana/engine` | Agent/session/tool/provider engine + TUI host (SolidJS + OpenTUI) |
 | `@arcana/tui` | Terminal UI components, branding, theme |
 | `@arcana/ui` | Web UI component library (SolidJS) |
 | `@arcana/llm` | Multi-provider LLM routing (OpenAI, Anthropic, Gemini, Bedrock, etc.) |
@@ -106,7 +106,6 @@ arcana cron remove <job-id>
 | `@arcana/cron` | Scheduled agent jobs |
 | `@arcana/skills` | 174 skill files across 28 categories |
 | `@arcana/plugin` | Plugin system (30+ lifecycle hooks) |
-| `@arcana/enterprise` | SolidJS/Start web dashboard |
 | `@arcana/http-recorder` | VCR-style HTTP cassette recorder for Effect-based testing |
 
 ## Deep Dive
@@ -226,7 +225,7 @@ bun run test
 ```sh
 bun run dev:tui          # from repo root
 # or
-bun run --conditions=browser packages/opencode/src/index.ts
+bun run --cwd packages/engine --conditions=browser packages/engine/src/index.ts
 ```
 
 ### Arcana CLI (standalone, no TUI)
