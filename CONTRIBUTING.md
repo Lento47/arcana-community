@@ -1,10 +1,6 @@
-# Contributing to arcana
+# Contributing to arcana-community
 
 Thanks for contributing. Before submitting a PR, please:
-
-## CLA
-
-All contributors must agree to the [Contributor License Agreement](CLA.md). By submitting a PR, you acknowledge and agree to the CLA.
 
 ## Guidelines
 
@@ -24,4 +20,4 @@ bun run test
 
 ## License
 
-Your contributions will be available under the [dual license](LICENSE) (MIT + Commercial).
+Your contributions will be available under the [MIT license](LICENSE).

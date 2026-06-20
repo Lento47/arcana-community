@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// SPDX-License-Identifier: MIT OR LicenseRef-arcana-Commercial
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 arcana contributors
 // arcana launcher — downloads the binary from R2 if needed, then runs it.
 // Entrypoint for: npx arcana-ai
