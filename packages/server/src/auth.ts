@@ -38,7 +38,11 @@ export class Config extends Context.Service<Config, Info>()("@arcana/ServerAuthC
 }
 
 export function required(config: Info) {
-  return Option.isSome(config.password) && config.password.value !== ""
+  const ok = Option.isSome(config.password) && config.password.value !== ""
+  if (!ok) {
+    console.info("[arcana] Running without server password (localhost-only). Set ARCANA_SERVER_PASSWORD to enable auth.")
+  }
+  return ok
 }
 
 export function authorized(credentials: DecodedCredentials, config: Info) {
