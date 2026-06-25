@@ -78,8 +78,8 @@ jobs:
           git commit -am "release: bump to $TAG"
           git tag "$TAG"
           # Pull to avoid race with concurrent pushes, then push atomically
-          git pull --rebase origin master || true
-          git push origin master && git push origin "$TAG" || {
+          git pull --rebase origin main || true
+          git push origin main && git push origin "$TAG" || {
             echo "Failed to push to master — another release may be in progress"
             git push origin --delete "$TAG" 2>/dev/null || true
             git tag -d "$TAG"
