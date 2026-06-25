@@ -3,7 +3,11 @@
 **Self-improving AI agent CLI** — skills, memory, gateway, coding, and cron in one terminal.
 
 [![npm](https://img.shields.io/npm/v/arcana-ai?label=npm)](https://www.npmjs.com/package/arcana-ai)
-[![license](https://img.shields.io/badge/license-MIT%20%2B%20Commercial-blue)](LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+> **npm vs source:** The `arcana-ai` npm package (v0.2.46) is the production binary
+> built from the upstream repo. This community source tree tracks the public code at
+> v0.2.26 and receives select patches. For the latest release binaries, use `npm install -g arcana-ai`.
 
 ## vs OpenCode
 
