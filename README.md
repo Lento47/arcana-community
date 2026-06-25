@@ -2,12 +2,8 @@
 
 **Self-improving AI agent CLI** — skills, memory, gateway, coding, and cron in one terminal.
 
-[![npm](https://img.shields.io/npm/v/arcana-ai?label=npm)](https://www.npmjs.com/package/arcana-ai)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-
-> **npm vs source:** The `arcana-ai` npm package (v0.2.46) is the production binary
-> built from the upstream repo. This community source tree tracks the public code at
-> v0.2.26 and receives select patches. For the latest release binaries, use `npm install -g arcana-ai`.
+[![source](https://img.shields.io/badge/source-v0.2.26-informational)](https://github.com/Lento47/arcana-community)
 
 ## vs OpenCode
 
@@ -36,20 +32,26 @@ arcana web --build       # build the web app instead of starting dev mode
 ## Install
 
 ```sh
-# Quick start (shim downloads binary on first run)
-npx arcana-ai
-
-# Or global install
-npm install -g arcana-ai
-arcana
-
-# From source (dev)
-git clone https://github.com/Lento47/arcana && cd arcana
+# From source (community edition)
+git clone https://github.com/Lento47/arcana-community && cd arcana-community
 bun install
-bun link                 # from packages/arcana/ — creates global `arcana` bin
+bun packages/arcana/src/index.ts run "hello"
 ```
 
-Single binary distribution; source build requires Node.js/Bun dependencies.
+### Production binary (opt-in)
+
+Prefer a prebuilt binary with auto-updates? Install `arcana-ai` from npm:
+
+[![npm](https://img.shields.io/npm/v/arcana-ai?label=npm)](https://www.npmjs.com/package/arcana-ai)
+
+```sh
+npm install -g arcana-ai     # or: npx arcana-ai
+arcana
+```
+
+The npm package ships the latest stable binary with all features. This community
+source tree is the public mirror — it receives select patches and drives OSS
+contributions. The binary is ahead of source (v0.2.46 vs v0.2.26).
 
 ## Quick start
 
