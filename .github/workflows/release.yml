@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,9 +82,12 @@ jobs:
           # Pull to avoid race with concurrent pushes, then push atomically
           git pull --rebase origin main || true
           git push origin main && git push origin "$TAG" || {
-            echo "Failed to push to master — another release may be in progress"
+            echo "Failed to push to main — another release may be in progress"
             git push origin --delete "$TAG" 2>/dev/null || true
             git tag -d "$TAG"
             exit 1
           }
-          echo "Tagged $TAG — build.yml will publish to npm after binaries are ready"
+
+          # Create GitHub Release with auto-generated release notes
+          gh release create "$TAG" --title "$TAG" --generate-notes || true
+          echo "Released $TAG"
