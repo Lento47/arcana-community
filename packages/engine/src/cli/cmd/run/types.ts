@@ -90,6 +90,7 @@ export type FooterState = {
   first: boolean
   interrupt: number
   exit: number
+  ml?: boolean
 }
 
 // A partial update to FooterState. The footer merges this onto the current state.
@@ -173,6 +174,7 @@ export type RunEntryBody =
 export type FooterView =
   | { type: "prompt" }
   | { type: "permission"; request: PermissionRequest }
+  | { type: "plan"; requests: PermissionRequest[] }
   | { type: "question"; request: QuestionRequest }
 
 export type FooterPromptRoute =

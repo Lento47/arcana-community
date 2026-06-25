@@ -131,6 +131,7 @@ type RuntimeState = {
   agent: string | undefined
   switching?: Promise<void>
   demo?: ReturnType<typeof createRunDemo>
+  mlRuntime: boolean
   selectSubagent?: (sessionID: string | undefined) => void
   session?: Promise<void>
   stream?: Promise<StreamState>
@@ -181,8 +182,13 @@ async function resolveExitTitle(
 async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDeps = {}): Promise<void> {
   const start = performance.now()
   const log = trace()
+  // Start the TUI config fetch immediately — it doesn't depend on `boot()`.
   const tuiConfigTask = resolveRunTuiConfig()
   const ctx = await input.boot()
+  // Start the remaining boot fetches in parallel with the TUI config fetch
+  // (instead of waiting for boot() before kicking these off). resolveModelInfo,
+  // resolveSessionInfo, and resolveSavedVariant are all independent of each
+  // other and of tuiConfig — they only need `ctx`.
   const modelTask = resolveModelInfo(ctx.sdk, ctx.directory, ctx.model)
   const sessionTask =
     ctx.resume === true
@@ -207,6 +213,7 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
     localRows: [],
     sessionTitle: ctx.sessionTitle,
     agent: ctx.agent,
+    mlRuntime: Flag.ARCANA_ML_RUNTIME,
   }
   const ensureSession = () => {
     if (!input.resolveSession || state.sessionID) {
@@ -217,11 +224,17 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
       return state.session
     }
 
-    state.session = input.resolveSession(ctx).then((next) => {
-      state.sessionID = next.sessionID
-      state.sessionTitle = next.sessionTitle ?? state.sessionTitle
-      state.agent = next.agent
-    })
+    state.session = input
+      .resolveSession(ctx)
+      .then((next) => {
+        state.sessionID = next.sessionID
+        state.sessionTitle = next.sessionTitle ?? state.sessionTitle
+        state.agent = next.agent
+      })
+      .catch((error) => {
+        state.session = undefined // allow next turn to retry
+        throw error
+      })
     return state.session
   }
 
@@ -343,12 +356,16 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
       }
 
       state.aborting = true
+      const timeout = setTimeout(() => {
+        state.aborting = false
+      }, 10_000)
       void ctx.sdk.session
         .abort({
           sessionID: state.sessionID,
         })
         .catch(() => {})
         .finally(() => {
+          clearTimeout(timeout)
           state.aborting = false
         })
     },
@@ -427,33 +444,36 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
     void Promise.resolve(input.afterPaint(ctx)).catch(() => {})
   }
 
-  void modelTask.then((info) => {
-    state.providers = info.providers
-    state.variants = variantsFor(state.providers, state.model)
-    state.limits = info.limits
+  void modelTask
+    .then((info) => {
+      state.providers = info.providers
+      state.variants = variantsFor(state.providers, state.model)
+      state.limits = info.limits
 
-    const next = resolveVariant(ctx.variant, session.variant, savedVariant, state.variants)
-    if (next !== state.activeVariant) {
-      state.activeVariant = next
-    }
+      const next = resolveVariant(ctx.variant, session.variant, savedVariant, state.variants)
+      if (next !== state.activeVariant) {
+        state.activeVariant = next
+      }
 
-    if (footer.isClosed) {
-      return
-    }
+      if (footer.isClosed) {
+        return
+      }
 
-    footer.event({ type: "models", providers: info.providers })
-    footer.event({ type: "variants", variants: state.variants, current: state.activeVariant })
-    if (!state.model) {
-      return
-    }
+      footer.event({ type: "models", providers: info.providers })
+      footer.event({ type: "variants", variants: state.variants, current: state.activeVariant })
+      if (!state.model) {
+        return
+      }
 
-    footer.event({
-      type: "model",
-      model: formatModelLabel(state.model, state.activeVariant, state.providers),
+      footer.event({
+        type: "model",
+        model: formatModelLabel(state.model, state.activeVariant, state.providers),
+      })
     })
-  })
+    .catch(() => {})
 
   const streamTask = deps.streamTransport ?? import("./stream.transport")
+  let streamGeneration = 0
   const ensureStream = () => {
     if (state.stream) {
       return state.stream
@@ -461,6 +481,9 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
 
     // Share eager prewarm and first-turn boot through one in-flight promise,
     // but clear it if transport creation fails so a later prompt can retry.
+    // A generation counter guards against concurrent calls that both pass
+    // the `state.stream` check before the first reaches assignment.
+    const gen = ++streamGeneration
     const next = (async () => {
       await ensureSession()
       if (footer.isClosed) {
@@ -489,6 +512,13 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
         throw new Error("runtime closed")
       }
 
+      // Only commit if this generation is still the latest — a newer
+      // ensureStream() call may have started while we were awaiting
+      // ensureSession() or creating the transport.
+      if (gen !== streamGeneration) {
+        await handle.close()
+        throw new Error("stream superseded")
+      }
       state.selectSubagent = (sessionID) => handle.selectSubagent(sessionID)
       return { mod, handle }
     })()
@@ -637,6 +667,28 @@ async function runInteractiveRuntime(input: RunRuntimeInput, deps: RunRuntimeDep
             }
           }
         : undefined,
+      onMlCommand: (action) => {
+        let next: boolean
+        switch (action) {
+          case "on":
+            next = true
+            break
+          case "off":
+            next = false
+            break
+          case "toggle":
+            next = !state.mlRuntime
+            break
+          case "status":
+            return { enabled: state.mlRuntime, status: `ml runtime ${state.mlRuntime ? "on" : "off"}` }
+        }
+        const previous = state.mlRuntime
+        state.mlRuntime = next
+        return {
+          enabled: next,
+          status: `ml runtime ${next ? "on" : "off"}${previous === next ? "" : " (was " + (previous ? "on" : "off") + ")"}`,
+        }
+      },
       run: async (prompt, signal) => {
         if (state.demo && (await state.demo.prompt(prompt, signal))) {
           return

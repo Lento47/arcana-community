@@ -25,6 +25,7 @@
 // two-press pattern where the first press shows a hint and the second press
 // within 5 seconds actually fires the action.
 import { CliRenderEvents, type CliRenderer, type KeyEvent, type Renderable, type TreeSitterClient } from "@opentui/core"
+import { Flag } from "@arcana/core/flag/flag"
 import type { Keymap } from "@opentui/keymap"
 import { render } from "@opentui/solid"
 import { createComponent, createSignal, type Accessor, type Setter } from "solid-js"
@@ -34,6 +35,7 @@ import { RUN_COMMAND_PANEL_ROWS, RUN_SUBAGENT_PANEL_ROWS } from "./footer.comman
 import { SUBAGENT_INSPECTOR_ROWS } from "./footer.subagent"
 import { PROMPT_MAX_ROWS, TEXTAREA_MIN_ROWS } from "./footer.prompt"
 import { RunFooterView } from "./footer.view"
+import type { PlanSummary } from "./footer.plan"
 import { RunScrollbackStream } from "./scrollback.surface"
 import { RUN_THEME_FALLBACK, resolveRunTheme, type RunTheme } from "./theme"
 import { modelInfo } from "./variant.shared"
@@ -101,6 +103,7 @@ type RunFooterOptions = {
 }
 
 const PERMISSION_ROWS = 12
+const PLAN_BASE_ROWS = 5
 const QUESTION_ROWS = 14
 const COMMAND_ROWS = RUN_COMMAND_PANEL_ROWS
 const SKILL_ROWS = RUN_COMMAND_PANEL_ROWS
@@ -109,6 +112,19 @@ const MODEL_ROWS = RUN_COMMAND_PANEL_ROWS
 const VARIANT_ROWS = RUN_COMMAND_PANEL_ROWS
 const NOTICE_DURATION = 3000
 const THEME_REFRESH_DELAYS = [1000, 1000] as const
+
+// Startup-phase profiling — emits JSON markers on stderr gated on
+// ARCANA_PROFILE_STARTUP. Tracks first paint + first footer patch.
+const FOOTER_PROFILE = !!process.env["ARCANA_PROFILE_STARTUP"]
+const FOOTER_PROFILE_PID = process.pid
+const FOOTER_PROFILE_T0 = performance.now()
+function footerEmit(phase: string, ts_ms: number) {
+  if (!FOOTER_PROFILE) return
+  process.stderr.write(JSON.stringify({ phase, ts_ms, pid: FOOTER_PROFILE_PID }) + "\n")
+}
+let footerConstructedEmitted = false
+let footerFirstPatchEmitted = false
+footerEmit("footer_module_load", FOOTER_PROFILE_T0)
 
 function createEmptySubagentState(): FooterSubagentState {
   return {
@@ -236,6 +252,10 @@ export class RunFooter implements FooterApi {
     private renderer: CliRenderer,
     private options: RunFooterOptions,
   ) {
+    if (!footerConstructedEmitted) {
+      footerConstructedEmitted = true
+      footerEmit("footer_constructed", performance.now())
+    }
     const [state, setState] = createSignal<FooterState>({
       phase: "idle",
       status: "",
@@ -246,6 +266,7 @@ export class RunFooter implements FooterApi {
       first: options.first,
       interrupt: 0,
       exit: 0,
+      ml: Flag.ARCANA_ML_RUNTIME,
     })
     this.state = state
     this.setState = setState
@@ -342,6 +363,7 @@ export class RunFooter implements FooterApi {
               onStatus: footer.setStatus,
               onSubagentSelect: options.onSubagentSelect,
               onQueuedRemove: footer.handleQueuedRemove,
+              onPlanSummary: footer.handlePlanSummary,
             })
           },
         }),
@@ -497,6 +519,7 @@ export class RunFooter implements FooterApi {
           : prev.interrupt,
       exit:
         typeof next.exit === "number" && Number.isFinite(next.exit) ? Math.max(0, Math.floor(next.exit)) : prev.exit,
+      ml: typeof next.ml === "boolean" ? next.ml : prev.ml,
     }
 
     if (state.phase === "idle") {
@@ -504,6 +527,12 @@ export class RunFooter implements FooterApi {
     }
 
     this.setState(state)
+
+    if (!footerFirstPatchEmitted) {
+      footerFirstPatchEmitted = true
+      footerEmit("footer_first_patch", performance.now())
+      footerEmit("footer_first_patch_ms", Math.round(performance.now() - FOOTER_PROFILE_T0))
+    }
 
     if (prev.phase === "running" && state.phase === "idle") {
       this.flush()
@@ -621,6 +650,7 @@ export class RunFooter implements FooterApi {
       return
     }
 
+    process.off("SIGUSR2", this.handleThemeSignal)
     this.flush()
     this.notifyClose()
   }
@@ -694,11 +724,14 @@ export class RunFooter implements FooterApi {
   // Resizes the footer to fit the current view. Permission and question views
   // get fixed extra rows; the prompt view scales with textarea line count.
   private applyHeight(): void {
-    const type = this.view().type
+    const v = this.view()
+    const type = v.type
     const height =
-      type === "permission"
-        ? this.base + PERMISSION_ROWS
-        : type === "question"
+      type === "plan"
+        ? this.base + PLAN_BASE_ROWS + Math.min(v.requests.length, 12)
+        : type === "permission"
+          ? this.base + PERMISSION_ROWS
+          : type === "question"
           ? this.base + QUESTION_ROWS
           : this.promptRoute.type === "command"
             ? 1 + COMMAND_ROWS
@@ -765,6 +798,39 @@ export class RunFooter implements FooterApi {
     }
 
     return true
+  }
+
+  private handlePlanSummary = (summary: PlanSummary): void => {
+    if (this.isClosed) {
+      return
+    }
+
+    const stateIcon =
+      summary.state === "running" ? "⚡" :
+      summary.state === "partial" ? "⚠" :
+      summary.state === "completed" ? "✅" : "·"
+
+    const stateLabel =
+      summary.state === "running" ? "EXECUTING" :
+      summary.state === "partial" ? "PARTIAL" :
+      summary.state === "completed" ? "DONE" : summary.state.toUpperCase()
+
+    const lines = [
+      `${stateIcon} Plan ${stateLabel} — ${summary.approved}/${summary.total} approved, ${summary.rejected} rejected`,
+      summary.succeeded > 0 || summary.failed > 0
+        ? `  succeeded ${summary.succeeded}, failed ${summary.failed}`
+        : "",
+      summary.state === "partial"
+        ? `  r = retry failed · R = re-run all`
+        : "",
+    ].filter(Boolean)
+
+    this.append({
+      kind: "system",
+      text: lines.join("\n"),
+      phase: summary.state === "running" ? "start" : "final",
+      source: "system",
+    })
   }
 
   private handlePermissionReply = async (input: PermissionReply): Promise<void> => {

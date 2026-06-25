@@ -283,7 +283,9 @@ function sameView(a: FooterView, b: FooterView) {
     return false
   }
 
-  return a.request === b.request
+  if (a.type !== b.type) return false
+  if (a.type === "plan") return false // plan has 'requests' not 'request'
+  return (a as any).request === (b as any).request
 }
 
 function blockerOrder(order: Map<string, number>, id: string) {
